@@ -1,7 +1,7 @@
-import psycopg, json
+import psycopg, json, os
 from psycopg.rows import dict_row
 
-from .utils import values_names_to_insert, compare_item_type_conditionals, read_json, path_creator
+from .utils import values_names_to_insert, compare_item_type_conditionals, read_json
 
 def insert_json_db(file_name: str, file_dir: str, dir_path:str):
     # Feature, add a function to check if table exist in db, if not exit create a db
@@ -17,11 +17,14 @@ def insert_json_db(file_name: str, file_dir: str, dir_path:str):
     column_names: str = values_names_to_insert(file_columns)
     placeholders: str = ", ".join(["%s"] * len(file_columns))
     insert_into_table_columns: str = f"INSERT INTO {file_name} {column_names} VALUES ({placeholders})"
-    for item in file:
-        table_values: tuple = compare_item_type_conditionals(item, file_columns)
-        with psycopg.connect("dbname=postgres host=localhost password=1234 user=postgres") as conn:
-            with conn.cursor() as cur:
-                cur.execute(insert_into_table_columns, table_values)
+
+    with psycopg.connect("dbname=postgres host=localhost password=1234 user=postgres") as conn:
+        with conn.cursor() as cur:
+            for item in file:
+                table_values: tuple = compare_item_type_conditionals(item, file_columns)
+            cur.execute(insert_into_table_columns, table_values)
+# Implementar executemany
+# Investigar sobre copy()
 
     print(f"Insert data into table {file_name} finished.")
 
