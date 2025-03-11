@@ -1,15 +1,15 @@
 from psycopg.rows import dict_row
 from psycopg.types.json import Json
 
-from models import Response, MeterReadings
-from utils import db_connection
+from restAPI.api_rest_exercises.src.models import Response, MeterReadings, MandateData
+from restAPI.api_rest_exercises.src.utils import db_connection
 
-import uvicorn
-from fastapi import FastAPI
+from fastapi import APIRouter
 
-app = FastAPI()
+mandate_data_router = APIRouter()
+meter_readings_router = APIRouter()
 
-@app.get("/mandate_data/{mandate_id}")
+@mandate_data_router.get("/mandate_data/{mandate_id}")
 async def get_mandate_data_by_id(mandate_id : str) -> Response:
     conn = db_connection()
     cursor = conn.cursor(row_factory = dict_row)
@@ -25,7 +25,7 @@ async def get_mandate_data_by_id(mandate_id : str) -> Response:
     else:
         return Response(status_code=404, message="Not found error")
 
-@app.delete("/mandate_data/{mandate_id}")
+@mandate_data_router.delete("/mandate_data/{mandate_id}")
 async def delete_mandate_data_by_id(mandate_id : str) -> Response:
     conn = db_connection()
     cursor = conn.cursor(row_factory = dict_row)
@@ -36,14 +36,45 @@ async def delete_mandate_data_by_id(mandate_id : str) -> Response:
         return Response(status_code=404, message="Not found error")
 
     cursor.execute("DELETE FROM mandate_data WHERE mandate_id = %s", (mandate_id,))
-
+# mejor hacer un delete con filtros y usando indices investigarlo en lugar de incluir una id aunque ambas estan bien
     conn.commit()
     cursor.close()
     conn.close()
 
     return Response(status_code=200, message={"deleted_data": data})
 
-@app.get("/meter_readings/")
+@mandate_data_router.put("/mandate_data/{mandate_id}")
+async def update_mandate_data_by_id(mandate_id : str, mandate_data : MandateData) -> Response:
+    conn = db_connection()
+    cursor = conn.cursor(row_factory = dict_row)
+
+    cursor.execute("SELECT * FROM mandate_data WHERE mandate_id = %s", (mandate_id,))
+    data = cursor.fetchone()
+    if not data:
+        return Response(status_code=404, message="Not found error")
+
+    mandate_data_dict = mandate_data.model_dump()
+    values_tuple = tuple(mandate_data_dict.values()) + (mandate_id,)
+    cursor.execute("""UPDATE mandate_data SET 
+                    mandate_id = %s,
+                    business_partner_id = %s,
+                    brand = %s,
+                    mandate_status = %s,
+                    collection_frequency = %s,
+                    row_update_datetime = %s,
+                    row_create_datetime = %s,
+                    changed_by = %s,
+                    collection_type = %s,
+                    metering_consent = %s
+                    WHERE mandate_id = %s""", values_tuple)
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return Response(status_code=201, message={"updated_data": mandate_data_dict})
+
+@meter_readings_router.get("/meter_readings/")
 async def get_meter_readings(account_id : str, energy_type : str):
     conn = db_connection()
     cursor = conn.cursor(row_factory = dict_row)
@@ -65,7 +96,7 @@ async def get_meter_readings(account_id : str, energy_type : str):
                 "message" : "Not Found"
                 }
 
-@app.post("/meter_readings/", response_model=Response)
+@meter_readings_router.post("/meter_readings/", response_model=Response)
 async def post_meter_reading(meter_readings : MeterReadings):
     conn = db_connection()
     cursor = conn.cursor()
@@ -95,7 +126,3 @@ async def post_meter_reading(meter_readings : MeterReadings):
         return Response(status_code=201, message={"meter_readings": meter_readings.model_dump()})
     else:
         return Response(status_code=400, message="Not valid input data error")
-# investigar type hinting db conn
-
-if __name__ == "__main__":
-    uvicorn.run(app, port=8080)
