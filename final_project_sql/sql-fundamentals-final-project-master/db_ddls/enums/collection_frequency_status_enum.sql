@@ -1,4 +1,4 @@
-public."collection_frequency_status_enum" AS ENUM (
+CREATE TYPE public."collection_frequency_status_enum" AS ENUM (
 	'D',
 	'I',
 	'M',

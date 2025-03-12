@@ -20,11 +20,11 @@ def insert_json_db(file_name: str, file_dir: str, dir_path:str):
 
     with psycopg.connect("dbname=postgres host=localhost password=1234 user=postgres") as conn:
         with conn.cursor() as cur:
-            for item in file:
-                table_values: tuple = compare_item_type_conditionals(item, file_columns)
-            cur.execute(insert_into_table_columns, table_values)
-# Implementar executemany
-# Investigar sobre copy()
+            table_values_list = [
+                compare_item_type_conditionals(item, file_columns) for item in file
+            ]
+            cur.executemany(insert_into_table_columns, table_values_list)
+
 
     print(f"Insert data into table {file_name} finished.")
 

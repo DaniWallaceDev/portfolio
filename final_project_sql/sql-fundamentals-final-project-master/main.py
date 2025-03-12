@@ -8,8 +8,8 @@ if __name__ == "__main__":
         "meter_data": "meter"
     }
 
-    #insert_json_db("meter_readings", files["meter_readings"], "src")
-    insert_json_db("mandate_data", files["mandate_data"], "data/dump")
-    #insert_json_db("meter_data", files["meter_data"], "data/dump")
+    insert_json_db("meter_readings", files["meter_readings"], "src/data/dump")
+    insert_json_db("mandate_data", files["mandate_data"], "src/data/dump")
+    insert_json_db("meter_data", files["meter_data"], "src/data/dump")
 
     #select_db_data("data/dump", files["meter_readings"], "meter_reading_energy_gas", "SELECT * FROM meter_readings WHERE energy_type = 'GAS'")

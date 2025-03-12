@@ -1,4 +1,5 @@
-CREATE TABLE public.meter_readings (
+CREATE TABLE meter_readings (
+	meter_readings_id int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	meter_number varchar(250) NULL,
 	account_id varchar(250) NOT NULL,
 	connection_ean_code varchar(250) NOT NULL,
